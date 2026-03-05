@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Калькулятор котлов</string>
+    <string name="tab_steam">Свойства пара</string>
+    <string name="tab_converter">Конвертер</string>
+    <string name="tab_heat">Расчёт тепла</string>
+    <string name="tab_economics">Экономика</string>
+    <string name="theme_dark">Тёмная</string>
+    <string name="theme_light">Светлая</string>
+    <string name="theme_latte">Латте</string>
+    <string name="btn_calculate">Рассчитать</string>
+    <string name="btn_reset">Сбросить</string>
+    <string name="btn_send">Отправить</string>
+    <string name="label_pressure">Давление</string>
+    <string name="label_temperature">Температура</string>
+    <string name="label_steam_capacity">Паропроизводительность</string>
+    <string name="label_power">Мощность</string>
+    <string name="label_gas_consumption">Расход газа</string>
+    <string name="unit_bar">бар</string>
+    <string name="unit_mpa">МПа</string>
+    <string name="unit_celsius">°C</string>
+    <string name="unit_kg_h">кг/ч</string>
+    <string name="unit_t_h">т/ч</string>
+    <string name="unit_mw">МВт</string>
+    <string name="unit_gcal_h">Гкал/ч</string>
+    <string name="unit_m3_h">м³/ч</string>
+    <string name="currency_rub">руб</string>
+    <string name="lead_name_hint">Ваше имя</string>
+    <string name="lead_phone_hint">Телефон</string>
+    <string name="lead_region_hint">Город / регион</string>
+</resources>
