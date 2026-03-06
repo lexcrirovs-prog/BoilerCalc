@@ -7,6 +7,6 @@ import ru.boilercalc.app.core.model.LeadFormData
 
 interface LeadApiService {
 
-    @POST("api/leads")
+    @POST("api/leads/")
     suspend fun submitLead(@Body data: LeadFormData): Response<Unit>
 }
