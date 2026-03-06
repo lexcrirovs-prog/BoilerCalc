@@ -8,6 +8,10 @@
  * Deploy to: kotelgavno.ru/public_html/api/leads/index.php
  */
 
+// ---- Debug (remove in production) ----
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
 // ---- Configuration ----
 $RECIPIENT_EMAIL = 'Premium-gas@mail.ru';
 $FROM_EMAIL      = 'noreply@kotelgavno.ru';
