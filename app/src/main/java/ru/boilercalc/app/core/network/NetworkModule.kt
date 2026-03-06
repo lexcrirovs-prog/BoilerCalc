@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit
 
 object NetworkModule {
 
-    private const val BASE_URL = "https://kotelpremium.ru/"
+    private const val BASE_URL = "https://kotelgavno.ru/"
 
     private val json = Json {
         ignoreUnknownKeys = true
