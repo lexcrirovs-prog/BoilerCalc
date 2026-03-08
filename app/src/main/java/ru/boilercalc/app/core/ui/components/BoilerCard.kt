@@ -53,7 +53,7 @@ fun BoilerCard(
     pressureBar: Double,
     modifier: Modifier = Modifier
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(true) }
     val context = LocalContext.current
 
     ElevatedCard(

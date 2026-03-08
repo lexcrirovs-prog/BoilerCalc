@@ -29,6 +29,8 @@ data class EconomicsState(
 
     // CAPEX
     val capex: Double = 0.0,
+    val additionalCapex: Double = 0.0,
+    val additionalCapexText: String = "",
 
     // Tariff
     val tarifGcal: Double = 0.0,

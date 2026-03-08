@@ -80,9 +80,9 @@ fun SteamPropertiesScreen(
         // Pressure slider + text
         SliderWithTextField(
             label = "Давление (избыточное)",
-            value = state.pressureBar.toFloat(),
+            value = viewModel.pressureSliderValue(),
             textValue = state.pressureText,
-            valueRange = 0f..16f,
+            valueRange = viewModel.pressureSliderRange(),
             onSliderChange = { viewModel.onPressureSliderChange(it) },
             onTextChange = { viewModel.onPressureChange(it) },
             unitText = state.pressureUnit,
@@ -94,9 +94,9 @@ fun SteamPropertiesScreen(
         // Temperature slider + text
         SliderWithTextField(
             label = "Температура насыщения",
-            value = state.temperatureC.toFloat(),
+            value = viewModel.temperatureSliderValue(),
             textValue = state.temperatureText,
-            valueRange = 99f..204.3f,
+            valueRange = viewModel.temperatureSliderRange(),
             onSliderChange = { viewModel.onTemperatureSliderChange(it) },
             onTextChange = { viewModel.onTemperatureChange(it) },
             unitText = state.tempUnit,
@@ -108,9 +108,9 @@ fun SteamPropertiesScreen(
         // Steam capacity slider + text
         SliderWithTextField(
             label = "Паропроизводительность",
-            value = state.steamCapacityKgH.toFloat(),
+            value = viewModel.capacitySliderValue(),
             textValue = state.steamCapacityText,
-            valueRange = 0f..15000f,
+            valueRange = viewModel.capacitySliderRange(),
             onSliderChange = { viewModel.onSteamCapacitySliderChange(it) },
             onTextChange = { viewModel.onSteamCapacityChange(it) },
             unitText = state.capacityUnit,

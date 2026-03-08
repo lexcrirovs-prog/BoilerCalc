@@ -5,25 +5,8 @@ import ru.boilercalc.app.core.model.UnitGroup
 
 object UnitDefinitions {
     val groups: List<UnitGroup> = listOf(
-        // 0: Давление (базовая: бар)
+        // 0: Давление (базовая: Па)
         UnitGroup("Давление", listOf(
-            UnitDef("бар", { it }, { it }),
-            UnitDef("кгс/см²", { it / 1.01972 }, { it * 1.01972 })
-        )),
-        // 1: Температура (базовая: °C)
-        UnitGroup("Температура", listOf(
-            UnitDef("°C", { it }, { it }),
-            UnitDef("K", { it - 273.15 }, { it + 273.15 }),
-            UnitDef("°F", { (it - 32.0) * 5.0 / 9.0 }, { it * 9.0 / 5.0 + 32.0 })
-        )),
-        // 2: Паропроизводительность (базовая: кг/ч)
-        UnitGroup("Паропроизводительность", listOf(
-            UnitDef("кг/ч", { it }, { it }),
-            UnitDef("т/ч", { it * 1000.0 }, { it / 1000.0 }),
-            UnitDef("кг/с", { it * 3600.0 }, { it / 3600.0 })
-        )),
-        // 3: Давление расширенное (базовая: Па)
-        UnitGroup("Давление расш.", listOf(
             UnitDef("Па", { it }, { it }),
             UnitDef("кПа", { it * 1000.0 }, { it / 1000.0 }),
             UnitDef("МПа", { it * 1_000_000.0 }, { it / 1_000_000.0 }),
@@ -44,14 +27,14 @@ object UnitDefinitions {
             UnitDef("ккал/ч", { it * 1.163 }, { it / 1.163 }),
             UnitDef("BTU/h", { it * 0.29307 }, { it / 0.29307 })
         )),
-        // 5: Температура полная (базовая: °C)
-        UnitGroup("Температура полн.", listOf(
+        // 2: Температура (базовая: °C)
+        UnitGroup("Температура", listOf(
             UnitDef("°C", { it }, { it }),
             UnitDef("K", { it - 273.15 }, { it + 273.15 }),
             UnitDef("°F", { (it - 32.0) * 5.0 / 9.0 }, { it * 9.0 / 5.0 + 32.0 })
         )),
-        // 6: Расход пара (базовая: кг/ч; МВт и кВт при r=2000 кДж/кг)
-        UnitGroup("Расход пара", listOf(
+        // 3: Паропроизводительность (базовая: кг/ч; МВт и кВт при r=2000 кДж/кг)
+        UnitGroup("Паропроизводительность", listOf(
             UnitDef("кг/ч", { it }, { it }),
             UnitDef("т/ч", { it * 1000.0 }, { it / 1000.0 }),
             UnitDef("кг/с", { it * 3600.0 }, { it / 3600.0 }),

@@ -147,7 +147,15 @@ fun EconomicsScreen(
         }
 
         // CAPEX card
-        if (state.selectedModel != null && state.capex > 0) {
+        if (state.selectedModel != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+
+            MoneyTextField(
+                value = state.additionalCapexText,
+                onValueChange = { viewModel.onAdditionalCapexChange(it) },
+                label = "Доп. расходы (монтаж, обвязка...)"
+            )
+
             Spacer(modifier = Modifier.height(8.dp))
             ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(12.dp)) {

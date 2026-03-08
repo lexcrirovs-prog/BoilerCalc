@@ -17,30 +17,124 @@ class SteamPropertiesViewModel : ViewModel() {
         calculate()
     }
 
-    // --- Pressure change: recalculate temperature from pressure ---
+    // ═══ Conversion helpers ═══
+
+    private fun barToDisplay(bar: Double, unit: String): Double = when (unit) {
+        "МПа" -> bar * 0.1
+        "кгс/см²" -> bar * 1.01972
+        else -> bar
+    }
+
+    private fun displayToBar(value: Double, unit: String): Double = when (unit) {
+        "МПа" -> value * 10.0
+        "кгс/см²" -> value / 1.01972
+        else -> value
+    }
+
+    private fun pressureDecimals(unit: String): Int = when (unit) {
+        "МПа" -> 4
+        "кгс/см²" -> 3
+        else -> 2
+    }
+
+    private fun celsiusToDisplay(c: Double, unit: String): Double = when (unit) {
+        "\u00B0F" -> c * 9.0 / 5.0 + 32.0
+        else -> c
+    }
+
+    private fun displayToCelsius(value: Double, unit: String): Double = when (unit) {
+        "\u00B0F" -> (value - 32.0) * 5.0 / 9.0
+        else -> value
+    }
+
+    private fun kghToDisplay(kgh: Double, unit: String): Double = when (unit) {
+        "т/ч" -> kgh / 1000.0
+        else -> kgh
+    }
+
+    private fun displayToKgh(value: Double, unit: String): Double = when (unit) {
+        "т/ч" -> value * 1000.0
+        else -> value
+    }
+
+    private fun capacityDecimals(unit: String): Int = when (unit) {
+        "т/ч" -> 3
+        else -> 0
+    }
+
+    private fun formatDisplay(value: Double, decimals: Int): String {
+        val formatted = Formatting.formatNumber(value, decimals)
+        return if (decimals > 0) formatted.trimEnd('0').trimEnd(',') else formatted
+    }
+
+    // ═══ Slider value/range helpers ═══
+
+    fun pressureSliderValue(): Float {
+        val s = _state.value
+        return barToDisplay(s.pressureBar, s.pressureUnit).toFloat()
+    }
+
+    fun pressureSliderRange(): ClosedFloatingPointRange<Float> = when (_state.value.pressureUnit) {
+        "МПа" -> 0f..1.6f
+        "кгс/см²" -> 0f..16.316f
+        else -> 0f..16f
+    }
+
+    fun temperatureSliderValue(): Float {
+        val s = _state.value
+        return celsiusToDisplay(s.temperatureC, s.tempUnit).toFloat()
+    }
+
+    fun temperatureSliderRange(): ClosedFloatingPointRange<Float> = when (_state.value.tempUnit) {
+        "\u00B0F" -> 210.2f..399.74f
+        else -> 99f..204.3f
+    }
+
+    fun capacitySliderValue(): Float {
+        val s = _state.value
+        return kghToDisplay(s.steamCapacityKgH, s.capacityUnit).toFloat()
+    }
+
+    fun capacitySliderRange(): ClosedFloatingPointRange<Float> = when (_state.value.capacityUnit) {
+        "т/ч" -> 0f..15f
+        else -> 0f..15000f
+    }
+
+    // ═══ Pressure change: recalculate temperature from pressure ═══
+
     fun onPressureChange(text: String) {
         val s = _state.value
         if (s.isUpdatingFromTemp) return
 
         val parsed = text.replace(',', '.').toDoubleOrNull()
-        val pressureBar = parsed?.coerceIn(0.0, 16.0) ?: s.pressureBar
+        val pressureBar = if (parsed != null) {
+            displayToBar(parsed, s.pressureUnit).coerceIn(0.0, 16.0)
+        } else {
+            s.pressureBar
+        }
 
         val props = SteamCalculationEngine.getSteamProperties(pressureBar)
         _state.value = s.copy(
             pressureText = text,
             pressureBar = pressureBar,
             temperatureC = props.temperature,
-            temperatureText = Formatting.formatNumber(props.temperature, 1)
-                .trimEnd('0').trimEnd(',')
+            temperatureText = formatDisplay(
+                celsiusToDisplay(props.temperature, s.tempUnit), 1
+            )
         )
         calculate()
     }
 
-    // --- Temperature change: recalculate pressure from temperature ---
+    // ═══ Temperature change: recalculate pressure from temperature ═══
+
     fun onTemperatureChange(text: String) {
         val s = _state.value
         val parsed = text.replace(',', '.').toDoubleOrNull()
-        val tempC = parsed?.coerceIn(99.0, 204.3) ?: s.temperatureC
+        val tempC = if (parsed != null) {
+            displayToCelsius(parsed, s.tempUnit).coerceIn(99.0, 204.3)
+        } else {
+            s.temperatureC
+        }
 
         _state.value = s.copy(isUpdatingFromTemp = true)
 
@@ -49,55 +143,65 @@ class SteamPropertiesViewModel : ViewModel() {
             temperatureText = text,
             temperatureC = tempC,
             pressureBar = pressureBar,
-            pressureText = Formatting.formatNumber(pressureBar, 2)
-                .trimEnd('0').trimEnd(','),
+            pressureText = formatDisplay(
+                barToDisplay(pressureBar, s.pressureUnit), pressureDecimals(s.pressureUnit)
+            ),
             isUpdatingFromTemp = false
         )
         calculate()
     }
 
     fun onPressureSliderChange(value: Float) {
-        val pressureBar = value.toDouble()
+        val s = _state.value
+        val pressureBar = displayToBar(value.toDouble(), s.pressureUnit)
         val props = SteamCalculationEngine.getSteamProperties(pressureBar)
-        _state.value = _state.value.copy(
+        _state.value = s.copy(
             pressureBar = pressureBar,
-            pressureText = Formatting.formatNumber(pressureBar, 2)
-                .trimEnd('0').trimEnd(','),
+            pressureText = formatDisplay(value.toDouble(), pressureDecimals(s.pressureUnit)),
             temperatureC = props.temperature,
-            temperatureText = Formatting.formatNumber(props.temperature, 1)
-                .trimEnd('0').trimEnd(',')
+            temperatureText = formatDisplay(
+                celsiusToDisplay(props.temperature, s.tempUnit), 1
+            )
         )
         calculate()
     }
 
     fun onTemperatureSliderChange(value: Float) {
-        val tempC = value.toDouble()
+        val s = _state.value
+        val tempC = displayToCelsius(value.toDouble(), s.tempUnit)
         val pressureBar = SteamCalculationEngine.getPressureFromTemp(tempC)
-        _state.value = _state.value.copy(
+        _state.value = s.copy(
             temperatureC = tempC,
-            temperatureText = Formatting.formatNumber(tempC, 1)
-                .trimEnd('0').trimEnd(','),
+            temperatureText = formatDisplay(value.toDouble(), 1),
             pressureBar = pressureBar,
-            pressureText = Formatting.formatNumber(pressureBar, 2)
-                .trimEnd('0').trimEnd(',')
+            pressureText = formatDisplay(
+                barToDisplay(pressureBar, s.pressureUnit), pressureDecimals(s.pressureUnit)
+            )
         )
         calculate()
     }
 
     fun onSteamCapacityChange(text: String) {
+        val s = _state.value
         val parsed = text.replace(',', '.').toDoubleOrNull()
-        _state.value = _state.value.copy(
+        val kgH = if (parsed != null) {
+            displayToKgh(parsed, s.capacityUnit).coerceIn(0.0, 15000.0)
+        } else {
+            s.steamCapacityKgH
+        }
+        _state.value = s.copy(
             steamCapacityText = text,
-            steamCapacityKgH = parsed?.coerceIn(0.0, 15000.0) ?: _state.value.steamCapacityKgH
+            steamCapacityKgH = kgH
         )
         calculate()
     }
 
     fun onSteamCapacitySliderChange(value: Float) {
-        val capacity = value.toDouble()
-        _state.value = _state.value.copy(
-            steamCapacityKgH = capacity,
-            steamCapacityText = Formatting.formatNumber(capacity, 0)
+        val s = _state.value
+        val kgH = displayToKgh(value.toDouble(), s.capacityUnit)
+        _state.value = s.copy(
+            steamCapacityKgH = kgH,
+            steamCapacityText = formatDisplay(value.toDouble(), capacityDecimals(s.capacityUnit))
         )
         calculate()
     }
@@ -120,33 +224,43 @@ class SteamPropertiesViewModel : ViewModel() {
         calculate()
     }
 
-    // --- Unit toggles ---
+    // ═══ Unit toggles ═══
+
     fun togglePressureUnit() {
-        val current = _state.value.pressureUnit
-        val next = when (current) {
+        val s = _state.value
+        val next = when (s.pressureUnit) {
             "бар" -> "МПа"
             "МПа" -> "кгс/см²"
             else -> "бар"
         }
-        _state.value = _state.value.copy(pressureUnit = next)
+        _state.value = s.copy(
+            pressureUnit = next,
+            pressureText = formatDisplay(barToDisplay(s.pressureBar, next), pressureDecimals(next))
+        )
     }
 
     fun toggleTempUnit() {
-        val current = _state.value.tempUnit
-        val next = when (current) {
+        val s = _state.value
+        val next = when (s.tempUnit) {
             "\u00B0C" -> "\u00B0F"
             else -> "\u00B0C"
         }
-        _state.value = _state.value.copy(tempUnit = next)
+        _state.value = s.copy(
+            tempUnit = next,
+            temperatureText = formatDisplay(celsiusToDisplay(s.temperatureC, next), 1)
+        )
     }
 
     fun toggleCapacityUnit() {
-        val current = _state.value.capacityUnit
-        val next = when (current) {
+        val s = _state.value
+        val next = when (s.capacityUnit) {
             "кг/ч" -> "т/ч"
             else -> "кг/ч"
         }
-        _state.value = _state.value.copy(capacityUnit = next)
+        _state.value = s.copy(
+            capacityUnit = next,
+            steamCapacityText = formatDisplay(kghToDisplay(s.steamCapacityKgH, next), capacityDecimals(next))
+        )
     }
 
     fun togglePowerUnit() {
@@ -159,31 +273,21 @@ class SteamPropertiesViewModel : ViewModel() {
         _state.value = _state.value.copy(powerUnit = next)
     }
 
-    // --- Display value converters ---
+    // ═══ Display value converters (for results section) ═══
+
     fun displayPressure(): String {
         val s = _state.value
-        val barValue = s.pressureBar
-        return when (s.pressureUnit) {
-            "МПа" -> Formatting.formatNumber(barValue * 0.1, 4).trimEnd('0').trimEnd(',')
-            "кгс/см²" -> Formatting.formatNumber(barValue * 1.01972, 3).trimEnd('0').trimEnd(',')
-            else -> Formatting.formatNumber(barValue, 2).trimEnd('0').trimEnd(',')
-        }
+        return formatDisplay(barToDisplay(s.pressureBar, s.pressureUnit), pressureDecimals(s.pressureUnit))
     }
 
     fun displayTemperature(): String {
         val s = _state.value
-        return when (s.tempUnit) {
-            "\u00B0F" -> Formatting.formatNumber(s.temperatureC * 9.0 / 5.0 + 32.0, 1).trimEnd('0').trimEnd(',')
-            else -> Formatting.formatNumber(s.temperatureC, 1).trimEnd('0').trimEnd(',')
-        }
+        return formatDisplay(celsiusToDisplay(s.temperatureC, s.tempUnit), 1)
     }
 
     fun displayCapacity(): String {
         val s = _state.value
-        return when (s.capacityUnit) {
-            "т/ч" -> Formatting.formatNumber(s.steamCapacityKgH / 1000.0, 3).trimEnd('0').trimEnd(',')
-            else -> Formatting.formatNumber(s.steamCapacityKgH, 0)
-        }
+        return formatDisplay(kghToDisplay(s.steamCapacityKgH, s.capacityUnit), capacityDecimals(s.capacityUnit))
     }
 
     fun displayPower(): String {
@@ -195,7 +299,8 @@ class SteamPropertiesViewModel : ViewModel() {
         }
     }
 
-    // --- Main calculation ---
+    // ═══ Main calculation ═══
+
     private fun calculate() {
         val s = _state.value
         val props = SteamCalculationEngine.getSteamProperties(s.pressureBar)

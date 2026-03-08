@@ -30,7 +30,7 @@ class EconomicsViewModel : ViewModel() {
                 boilerCategory = category,
                 selectedModel = null,
                 useEconomizer = false,
-                capex = 0.0,
+                capex = it.additionalCapex,
                 isCalculated = false
             )
         }
@@ -261,10 +261,26 @@ class EconomicsViewModel : ViewModel() {
         }
     }
 
+    fun onAdditionalCapexChange(text: String) {
+        val value = Formatting.parseMoney(text)
+        _state.update { current ->
+            val capex = current.selectedModel?.let {
+                calculateCapex(it, current.boilerCount, current.useEconomizer, value)
+            } ?: value
+            current.copy(
+                additionalCapexText = text,
+                additionalCapex = value,
+                capex = capex,
+                isCalculated = false
+            )
+        }
+    }
+
     private fun calculateCapex(
         model: EconBoilerModel,
         count: Int,
-        useEconomizer: Boolean
+        useEconomizer: Boolean,
+        additionalCapex: Double = _state.value.additionalCapex
     ): Double {
         val boilerCost = model.price.toDouble() * count
         val economizerCost = if (useEconomizer && model.economizerPrice != null) {
@@ -272,7 +288,7 @@ class EconomicsViewModel : ViewModel() {
         } else {
             0.0
         }
-        return boilerCost + economizerCost
+        return boilerCost + economizerCost + additionalCapex
     }
 
     fun calculate() {
