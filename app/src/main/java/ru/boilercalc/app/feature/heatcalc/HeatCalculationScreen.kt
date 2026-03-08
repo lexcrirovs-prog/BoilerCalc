@@ -26,12 +26,20 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.launch
+import ru.boilercalc.app.core.model.LeadFormData
+import ru.boilercalc.app.core.network.LeadRepository
+import ru.boilercalc.app.core.ui.components.LeadFormDialog
 import ru.boilercalc.app.core.ui.components.SearchableDropdown
 import ru.boilercalc.app.core.util.Formatting
 import ru.boilercalc.app.feature.heatcalc.components.BuildingCard
@@ -42,6 +50,11 @@ fun HeatCalculationScreen(
     viewModel: HeatCalculationViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val scope = rememberCoroutineScope()
+    val leadRepository = remember { LeadRepository() }
+    var showLeadForm by remember { mutableStateOf(false) }
+    var leadSubmitting by remember { mutableStateOf(false) }
+    var leadError by remember { mutableStateOf<String?>(null) }
 
     Column(
         modifier = Modifier
@@ -184,9 +197,67 @@ fun HeatCalculationScreen(
                 gsop = state.gsop,
                 selectedBoilers = state.selectedBoilers
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = { showLeadForm = true },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondary
+                )
+            ) {
+                Text(
+                    text = "Получить коммерческое предложение",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(32.dp))
+    }
+
+    if (showLeadForm) {
+        LeadFormDialog(
+            title = "Коммерческое предложение",
+            context = "heat-calculator",
+            onSubmit = { name, phone, region ->
+                leadSubmitting = true
+                leadError = null
+                scope.launch {
+                    val boilerName = state.selectedBoilers.firstOrNull()?.let {
+                        "${it.model.series} ${it.model.power} кВт × ${it.count}"
+                    } ?: ""
+                    val data = LeadFormData(
+                        name = name,
+                        phone = phone,
+                        region = region,
+                        context = "heat-calculator",
+                        model = boilerName,
+                        boilerType = "water",
+                        capacity = state.qTotal,
+                        timestamp = System.currentTimeMillis().toString()
+                    )
+                    leadRepository.submitLead(data)
+                        .onSuccess {
+                            leadSubmitting = false
+                            showLeadForm = false
+                        }
+                        .onFailure {
+                            leadSubmitting = false
+                            leadError = it.message
+                        }
+                }
+            },
+            onDismiss = {
+                if (!leadSubmitting) {
+                    showLeadForm = false
+                    leadError = null
+                }
+            },
+            isSubmitting = leadSubmitting,
+            error = leadError
+        )
     }
 }
 
