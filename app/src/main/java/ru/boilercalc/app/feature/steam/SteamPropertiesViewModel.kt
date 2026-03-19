@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import ru.boilercalc.app.core.domain.BoilerSelectionEngine
 import ru.boilercalc.app.core.domain.SteamCalculationEngine
+import ru.boilercalc.app.core.domain.UnitConversionEngine
 import ru.boilercalc.app.core.util.Formatting
 
 class SteamPropertiesViewModel : ViewModel() {
@@ -47,18 +48,16 @@ class SteamPropertiesViewModel : ViewModel() {
         else -> value
     }
 
-    private fun kghToDisplay(kgh: Double, unit: String): Double = when (unit) {
-        "т/ч" -> kgh / 1000.0
-        else -> kgh
-    }
+    private fun kghToDisplay(kgh: Double, unit: String): Double =
+        UnitConversionEngine.convert(3, "кг/ч", unit, kgh)
 
-    private fun displayToKgh(value: Double, unit: String): Double = when (unit) {
-        "т/ч" -> value * 1000.0
-        else -> value
-    }
+    private fun displayToKgh(value: Double, unit: String): Double =
+        UnitConversionEngine.convert(3, unit, "кг/ч", value)
 
     private fun capacityDecimals(unit: String): Int = when (unit) {
         "т/ч" -> 3
+        "МВт" -> 3
+        "Гкал/ч" -> 3
         else -> 0
     }
 
@@ -96,8 +95,10 @@ class SteamPropertiesViewModel : ViewModel() {
     }
 
     fun capacitySliderRange(): ClosedFloatingPointRange<Float> = when (_state.value.capacityUnit) {
-        "т/ч" -> 0f..15f
-        else -> 0f..15000f
+        "т/ч" -> 0f..100f
+        "МВт" -> 0f..60f
+        "Гкал/ч" -> 0f..50f
+        else -> 0f..100000f
     }
 
     // ═══ Pressure change: recalculate temperature from pressure ═══
@@ -185,7 +186,7 @@ class SteamPropertiesViewModel : ViewModel() {
         val s = _state.value
         val parsed = text.replace(',', '.').toDoubleOrNull()
         val kgH = if (parsed != null) {
-            displayToKgh(parsed, s.capacityUnit).coerceIn(0.0, 15000.0)
+            displayToKgh(parsed, s.capacityUnit).coerceIn(0.0, 100000.0)
         } else {
             s.steamCapacityKgH
         }
@@ -255,6 +256,8 @@ class SteamPropertiesViewModel : ViewModel() {
         val s = _state.value
         val next = when (s.capacityUnit) {
             "кг/ч" -> "т/ч"
+            "т/ч" -> "Гкал/ч"
+            "Гкал/ч" -> "МВт"
             else -> "кг/ч"
         }
         _state.value = s.copy(

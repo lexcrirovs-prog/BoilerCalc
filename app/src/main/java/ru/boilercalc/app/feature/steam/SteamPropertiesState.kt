@@ -27,7 +27,7 @@ data class SteamPropertiesState(
     // Unit display modes
     val pressureUnit: String = "бар",       // бар | МПа | кгс/см²
     val tempUnit: String = "\u00B0C",       // °C | °F
-    val capacityUnit: String = "кг/ч",      // кг/ч | т/ч
+    val capacityUnit: String = "кг/ч",      // кг/ч | т/ч | Гкал/ч | МВт
     val powerUnit: String = "МВт",          // МВт | Гкал/ч | кВт
     val gasUnit: String = "м\u00B3/ч",      // м³/ч
 
